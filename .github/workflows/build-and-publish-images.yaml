@@ -516,7 +516,6 @@ jobs:
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha
             type=ref,event=pr
 
       - name: Calculate variables
@@ -647,7 +646,6 @@ jobs:
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha
             type=ref,event=pr
 
       - name: Build educates client program
@@ -695,7 +693,6 @@ jobs:
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha
             type=ref,event=pr
 
       - name: Build educates client program
@@ -743,7 +740,6 @@ jobs:
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha
             type=ref,event=pr
 
       - name: Build educates client program
@@ -796,7 +792,6 @@ jobs:
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha
             type=ref,event=pr
 
       - name: Build educates client program
@@ -861,7 +856,6 @@ jobs:
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha
             type=ref,event=pr
 
       - name: Calculate variables
@@ -934,7 +928,6 @@ jobs:
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha
             type=ref,event=pr
 
       - name: Calculate variables
@@ -1004,7 +997,6 @@ jobs:
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha
             type=ref,event=pr
 
       - name: Calculate variables
@@ -1044,7 +1036,6 @@ jobs:
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha
             type=ref,event=pr
 
       - name: Calculate variables
