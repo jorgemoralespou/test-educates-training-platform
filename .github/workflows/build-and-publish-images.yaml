@@ -872,7 +872,7 @@ jobs:
           platforms: ${{env.TARGET_PLATFORMS}}
           build-args: |
             REPOSITORY=ghcr.io/${{env.REPOSITORY_OWNER}}
-            TAG=${{env.REPOSITORY_TAG}}
+            TAG=${{steps.meta.outputs.tags}}
           tags: ${{steps.meta.outputs.tags}}
           push: true
 
