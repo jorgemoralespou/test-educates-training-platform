@@ -21,7 +21,7 @@ on:
 
 env:
   GO_VERSION: "1.23.7"
-  BUILDKIT_VERSION: "v0.25.1"
+  BUILDKIT_VERSION: "v0.29.1"
 
 jobs:
   publish-generic-images:
