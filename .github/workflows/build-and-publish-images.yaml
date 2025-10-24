@@ -114,6 +114,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=ref,event=pr
+            type=sha
 
       - name: Login to GitHub container registry
         uses: docker/login-action@v3
@@ -258,6 +259,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=ref,event=pr
+            type=sha
 
       - name: Login to GitHub container registry
         uses: docker/login-action@v3
@@ -418,6 +420,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=ref,event=pr
+            type=sha
 
       - name: Login to GitHub container registry
         uses: docker/login-action@v3
@@ -889,6 +892,7 @@ jobs:
         run: |
           REPOSITORY_OWNER=${{github.repository_owner}}
           echo "REPOSITORY_OWNER=${REPOSITORY_OWNER,,}" >>${GITHUB_ENV}
+          echo "REPOSITORY_SHA_TAG=sha-${GITHUB_SHA::7}" >>${GITHUB_ENV}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -910,6 +914,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=ref,event=pr
+            type=sha
 
       - name: Login to GitHub container registry
         uses: docker/login-action@v3
@@ -918,21 +923,6 @@ jobs:
           password: ${{secrets.GITHUB_TOKEN}}
           registry: ghcr.io
 
-      - name: Calculate tag/version
-        id: tag-meta
-        uses: docker/metadata-action@v5
-        with:
-          tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=ref,event=pr
-
-      - name: Calculate variables
-        shell: bash
-        run: |
-          echo "REPOSITORY_TAG=${{steps.tag-meta.outputs.tags}}" >>${GITHUB_ENV}
-
       - name: Build and push docker-cli image
         uses: docker/build-push-action@v6
         with:
@@ -940,7 +930,7 @@ jobs:
           platforms: ${{env.TARGET_PLATFORMS}}
           build-args: |
             REPOSITORY=ghcr.io/${{env.REPOSITORY_OWNER}}
-            TAG=${{env.REPOSITORY_TAG}}
+            TAG=${{env.REPOSITORY_SHA_TAG}}
           tags: ${{steps.meta.outputs.tags}}
           push: true
 
@@ -959,6 +949,7 @@ jobs:
         run: |
           REPOSITORY_OWNER=${{github.repository_owner}}
           echo "REPOSITORY_OWNER=${REPOSITORY_OWNER,,}" >>${GITHUB_ENV}
+          echo "REPOSITORY_SHA_TAG=sha-${GITHUB_SHA::7}" >>${GITHUB_ENV}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -980,6 +971,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=ref,event=pr
+            type=sha
 
       - name: Login to GitHub container registry
         uses: docker/login-action@v3
@@ -988,21 +980,6 @@ jobs:
           password: ${{secrets.GITHUB_TOKEN}}
           registry: ghcr.io
 
-      - name: Calculate tag/version
-        id: tag-meta
-        uses: docker/metadata-action@v5
-        with:
-          tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=ref,event=pr
-
-      - name: Calculate variables
-        shell: bash
-        run: |
-          echo "REPOSITORY_TAG=${{steps.tag-meta.outputs.tags}}" >>${GITHUB_ENV}
-
       - name: Build and push docker-extension image
         uses: docker/build-push-action@v6
         with:
@@ -1010,7 +987,7 @@ jobs:
           platforms: ${{env.TARGET_PLATFORMS}}
           build-args: |
             REPOSITORY=ghcr.io/${{env.REPOSITORY_OWNER}}
-            TAG=${{env.REPOSITORY_TAG}}
+            TAG=${{env.REPOSITORY_SHA_TAG}}
           tags: ${{steps.meta.outputs.tags}}
           push: true
 
@@ -1027,20 +1004,10 @@ jobs:
       - publish-docker-extension
 
     steps:
-      - name: Calculate tag/version
-        id: tag-meta
-        uses: docker/metadata-action@v5
-        with:
-          tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=ref,event=pr
-
       - name: Calculate variables
         shell: bash
         run: |
-          REPOSITORY_TAG=${{steps.tag-meta.outputs.tags}}
+          REPOSITORY_TAG=${GITHUB_REF##*/}" >>${GITHUB_ENV}
           if [[ "$REPOSITORY_TAG" == *-* ]]; then
             PRERELEASE=true
           else
