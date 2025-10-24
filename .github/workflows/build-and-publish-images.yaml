@@ -21,7 +21,6 @@ on:
 
 env:
   GO_VERSION: "1.23.7"
-  BUILDKIT_VERSION: "v0.29.1"
 
 jobs:
   publish-generic-images:
@@ -75,9 +74,6 @@ jobs:
 
       - name: Set up Docker buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver-opts: |
-            image=moby/buildkit:${{env.BUILDKIT_VERSION}}
 
       - name: Restore Docker cache (amd64)
         if: ${{ (matrix.image == 'secrets-manager') || (matrix.image == 'session-manager') || (matrix.image == 'training-portal') || (matrix.image == 'tunnel-manager') || (matrix.image == 'lookup-service') }}
@@ -210,9 +206,6 @@ jobs:
 
       - name: Set up Docker buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver-opts: |
-            image=moby/buildkit:${{env.BUILDKIT_VERSION}}
 
       - name: Verify docker daemon image contents
         run: |
@@ -369,9 +362,6 @@ jobs:
 
       - name: Set up Docker buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver-opts: |
-            image=moby/buildkit:${{env.BUILDKIT_VERSION}}
 
       - name: Verify docker daemon image contents
         run: |
@@ -899,9 +889,6 @@ jobs:
 
       - name: Set up Docker buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver-opts: |
-            image=moby/buildkit:${{env.BUILDKIT_VERSION}}
 
       - name: Generate container image metadata
         id: meta
@@ -956,9 +943,6 @@ jobs:
 
       - name: Set up Docker buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver-opts: |
-            image=moby/buildkit:${{env.BUILDKIT_VERSION}}
 
       - name: Generate container image metadata
         id: meta
