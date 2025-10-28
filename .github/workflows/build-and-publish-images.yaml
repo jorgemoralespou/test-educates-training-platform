@@ -884,6 +884,24 @@ jobs:
           echo "REPOSITORY_OWNER=${REPOSITORY_OWNER,,}" >>${GITHUB_ENV}
           echo "REPOSITORY_SHA_TAG=sha-${GITHUB_SHA::7}" >>${GITHUB_ENV}
 
+      - name: Calculate platforms
+        shell: bash
+        run: |
+          TARGET_PLATFORMS="${{github.event.inputs.target_platforms}}"
+          if [ -z "$TARGET_PLATFORMS" ]; then
+            TARGET_PLATFORMS="${{secrets.TARGET_PLATFORMS}}"
+          fi
+          # Only build for amd64 if it's a fork for speed reasons
+          if [ -z "$TARGET_PLATFORMS" ]; then
+            IS_FORK=$(if [[ $GITHUB_EVENT_NAME == 'push' && $GITHUB_EVENT_PATH ]]; then jq -r .repository.fork <<< $(cat $GITHUB_EVENT_PATH); else echo false; fi)
+            if [ $IS_FORK == "true" ]; then
+              TARGET_PLATFORMS="linux/amd64"
+            else
+              TARGET_PLATFORMS="linux/amd64,linux/arm64"
+            fi
+          fi
+          echo "TARGET_PLATFORMS=${TARGET_PLATFORMS}" >>${GITHUB_ENV}
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -937,6 +955,24 @@ jobs:
           REPOSITORY_OWNER=${{github.repository_owner}}
           echo "REPOSITORY_OWNER=${REPOSITORY_OWNER,,}" >>${GITHUB_ENV}
           echo "REPOSITORY_SHA_TAG=sha-${GITHUB_SHA::7}" >>${GITHUB_ENV}
+
+      - name: Calculate platforms
+        shell: bash
+        run: |
+          TARGET_PLATFORMS="${{github.event.inputs.target_platforms}}"
+          if [ -z "$TARGET_PLATFORMS" ]; then
+            TARGET_PLATFORMS="${{secrets.TARGET_PLATFORMS}}"
+          fi
+          # Only build for amd64 if it's a fork for speed reasons
+          if [ -z "$TARGET_PLATFORMS" ]; then
+            IS_FORK=$(if [[ $GITHUB_EVENT_NAME == 'push' && $GITHUB_EVENT_PATH ]]; then jq -r .repository.fork <<< $(cat $GITHUB_EVENT_PATH); else echo false; fi)
+            if [ $IS_FORK == "true" ]; then
+              TARGET_PLATFORMS="linux/amd64"
+            else
+              TARGET_PLATFORMS="linux/amd64,linux/arm64"
+            fi
+          fi
+          echo "TARGET_PLATFORMS=${TARGET_PLATFORMS}" >>${GITHUB_ENV}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
