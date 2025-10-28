@@ -139,6 +139,7 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache-amd64-old
           cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-amd64-new
           push: false
+          load: true
 
       - name: Cache build ${{matrix.image}} (arm64)
         if: contains(env.TARGET_PLATFORMS, 'linux/arm64')
@@ -149,6 +150,12 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache-arm64-old
           cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-arm64-new
           push: false
+          load: true
+
+      - name: Remove old cache directories
+        run: |
+          rm -rf /tmp/.buildx-cache-arm64-old || true
+          rm -rf /tmp/.buildx-cache-amd64-old || true
 
       - name: Dump cache directory sizes
         if: ${{ (matrix.image == 'secrets-manager') || (matrix.image == 'session-manager') || (matrix.image == 'training-portal') || (matrix.image == 'tunnel-manager') || (matrix.image == 'lookup-service') }}
@@ -210,14 +217,6 @@ jobs:
       - name: Verify docker daemon image contents
         run: |
           docker images
-
-      - name: Remove unwanted images to free storage space
-        run: |
-          docker rmi node:14 || true
-          docker rmi node:16 || true
-          docker rmi node:18 || true
-          docker rmi node:20 || true
-          docker images prune
 
       - name: Restore Docker cache (amd64)
         uses: actions/cache/restore@v4
@@ -281,10 +280,11 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache-amd64-old
           cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-amd64-new
           push: false
+          load: true
 
-      - name: Remove old cache directories
+      - name: Remove old cache directories amd64
         run: |
-          rm -rf /tmp/.buildx-cache-amd64-old
+          rm -rf /tmp/.buildx-cache-amd64-old || true
 
       - name: Cache build ${{matrix.image}} (arm64)
         if: contains(env.TARGET_PLATFORMS, 'linux/arm64')
@@ -295,6 +295,11 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache-arm64-old
           cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-arm64-new
           push: false
+          load: true
+
+      - name: Remove old cache directories arm64
+        run: |
+          rm -rf /tmp/.buildx-cache-arm64-old || true
 
       - name: Dump cache directory sizes
         run: |
@@ -366,14 +371,6 @@ jobs:
       - name: Verify docker daemon image contents
         run: |
           docker images
-
-      - name: Remove unwanted images to free storage space
-        run: |
-          docker rmi node:14 || true
-          docker rmi node:16 || true
-          docker rmi node:18 || true
-          docker rmi node:20 || true
-          docker images prune
 
       - name: Restore Docker cache (amd64)
         if: ${{ (matrix.image == 'conda-environment') }}
@@ -447,10 +444,11 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache-amd64-old
           cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-amd64-new
           push: false
+          load: true
 
-      - name: Remove old cache directories
+      - name: Remove old cache directories amd64
         run: |
-          rm -rf /tmp/.buildx-cache-amd64-old
+          rm -rf /tmp/.buildx-cache-amd64-old || true
 
       - name: Cache build ${{matrix.image}} (arm64)
         if: contains(env.TARGET_PLATFORMS, 'linux/arm64')
@@ -465,6 +463,11 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache-arm64-old
           cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-arm64-new
           push: false
+          load: true
+
+      - name: Remove old cache directories arm64
+        run: |
+          rm -rf /tmp/.buildx-cache-arm64-old || true
 
       - name: Dump cache directory sizes
         if: ${{ (matrix.image == 'conda-environment') }}
