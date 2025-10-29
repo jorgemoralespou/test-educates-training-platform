@@ -218,26 +218,18 @@ jobs:
         run: |
           docker images
 
-      - name: Restore Docker cache (amd64)
+      - name: Restore Docker cache
         uses: actions/cache/restore@v4
         with:
-          path: /tmp/.buildx-cache-amd64-new
-          key: ${{runner.os}}-buildx-cache-amd64-base-environment-${{github.sha}}
+          path: /tmp/.buildx-cache-new
+          key: ${{runner.os}}-buildx-cache-base-environment-${{github.sha}}
           restore-keys: |
-            ${{runner.os}}-buildx-cache-amd64-base-environment-
+            ${{runner.os}}-buildx-cache-base-environment-
 
-      - name: Restore Docker cache (arm64)
-        uses: actions/cache/restore@v4
-        with:
-          path: /tmp/.buildx-cache-arm64-new
-          key: ${{runner.os}}-buildx-cache-arm64-base-environment-${{github.sha}}
-          restore-keys: |
-            ${{runner.os}}-buildx-cache-arm64-base-environment-
 
       - name: Rename cache directories
         run: |
-          test -d /tmp/.buildx-cache-amd64-new && mv /tmp/.buildx-cache-amd64-new /tmp/.buildx-cache-amd64-old || true
-          test -d /tmp/.buildx-cache-arm64-new && mv /tmp/.buildx-cache-arm64-new /tmp/.buildx-cache-arm64-old || true
+          test -d /tmp/.buildx-cache-new && mv /tmp/.buildx-cache-new /tmp/.buildx-cache-old || true
           du -ks /tmp/.buildx-cache-* || true
 
       - name: Generate container image metadata
@@ -266,56 +258,23 @@ jobs:
           context: workshop-images/base-environment
           platforms: ${{env.TARGET_PLATFORMS}}
           tags: ${{steps.meta.outputs.tags}}
-          cache-from: |
-            type=local,src=/tmp/.buildx-cache-arm64-old
-            type=local,src=/tmp/.buildx-cache-amd64-old
+          cache-from: type=local,src=/tmp/.buildx-cache-old
+          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
           push: true
-
-      - name: Cache build ${{matrix.image}} (amd64)
-        if: contains(env.TARGET_PLATFORMS, 'linux/amd64')
-        uses: docker/build-push-action@v6
-        with:
-          context: workshop-images/base-environment
-          platforms: linux/amd64
-          cache-from: type=local,src=/tmp/.buildx-cache-amd64-old
-          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-amd64-new
-          push: false
-          load: true
 
       - name: Remove old cache directories amd64
         run: |
-          rm -rf /tmp/.buildx-cache-amd64-old || true
-
-      - name: Cache build ${{matrix.image}} (arm64)
-        if: contains(env.TARGET_PLATFORMS, 'linux/arm64')
-        uses: docker/build-push-action@v6
-        with:
-          context: workshop-images/base-environment
-          platforms: linux/arm64
-          cache-from: type=local,src=/tmp/.buildx-cache-arm64-old
-          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-arm64-new
-          push: false
-          load: true
-
-      - name: Remove old cache directories arm64
-        run: |
-          rm -rf /tmp/.buildx-cache-arm64-old || true
+          rm -rf /tmp/.buildx-cache-old || true
 
       - name: Dump cache directory sizes
         run: |
           du -ks /tmp/.buildx-cache-* || true
 
-      - name: Save Docker cache (amd64)
+      - name: Save Docker cache
         uses: actions/cache/save@v4
         with:
-          path: /tmp/.buildx-cache-amd64-new
-          key: ${{runner.os}}-buildx-cache-amd64-base-environment-${{github.sha}}
-
-      - name: Save Docker cache (arm64)
-        uses: actions/cache/save@v4
-        with:
-          path: /tmp/.buildx-cache-arm64-new
-          key: ${{runner.os}}-buildx-cache-arm64-base-environment-${{github.sha}}
+          path: /tmp/.buildx-cache-new
+          key: ${{runner.os}}-buildx-cache-base-environment-${{github.sha}}
 
   publish-workshop-images:
     name: Publish
