@@ -181,6 +181,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Delete unnecesary tools
+        run: |
+          cd /opt
+          find . -maxdepth 1 -mindepth 1 '!' -path ./containerd '!' -path ./actionarchivecache '!' -path ./runner '!' -path ./runner-cache -exec rm -rf '{}' ';'
+
       - name: Check out the repository
         uses: actions/checkout@v4
 
