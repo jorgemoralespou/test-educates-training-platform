@@ -75,28 +75,27 @@ jobs:
       - name: Set up Docker buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Restore Docker cache (amd64)
+      - name: Free Disk Space
+        if: ${{ (matrix.image == 'secrets-manager') || (matrix.image == 'session-manager') || (matrix.image == 'training-portal') || (matrix.image == 'tunnel-manager') || (matrix.image == 'lookup-service') }}
+        uses: endersonmenezes/free-disk-space@v2
+        with:
+          remove_android: true
+          remove_dotnet: true
+          remove_haskell: true
+          remove_tool_cache: true
+
+      - name: Restore Docker cache
         if: ${{ (matrix.image == 'secrets-manager') || (matrix.image == 'session-manager') || (matrix.image == 'training-portal') || (matrix.image == 'tunnel-manager') || (matrix.image == 'lookup-service') }}
         uses: actions/cache/restore@v4
         with:
           path: /tmp/.buildx-cache-amd64-new
-          key: ${{runner.os}}-buildx-cache-amd64-${{matrix.image}}-${{github.sha}}
+          key: ${{runner.os}}-buildx-cache-${{matrix.image}}-${{github.sha}}
           restore-keys: |
-            ${{runner.os}}-buildx-cache-amd64-${{matrix.image}}-
-
-      - name: Restore Docker cache (arm64)
-        if: ${{ (matrix.image == 'secrets-manager') || (matrix.image == 'session-manager') || (matrix.image == 'training-portal') || (matrix.image == 'tunnel-manager') || (matrix.image == 'lookup-service') }}
-        uses: actions/cache/restore@v4
-        with:
-          path: /tmp/.buildx-cache-arm64-new
-          key: ${{runner.os}}-buildx-cache-arm64-${{matrix.image}}-${{github.sha}}
-          restore-keys: |
-            ${{runner.os}}-buildx-cache-arm64-${{matrix.image}}-
+            ${{runner.os}}-buildx-cache-${{matrix.image}}-
 
       - name: Rename cache directories
         run: |
-          test -d /tmp/.buildx-cache-amd64-new && mv /tmp/.buildx-cache-amd64-new /tmp/.buildx-cache-amd64-old || true
-          test -d /tmp/.buildx-cache-arm64-new && mv /tmp/.buildx-cache-arm64-new /tmp/.buildx-cache-arm64-old || true
+          test -d /tmp/.buildx-cache-new && mv /tmp/.buildx-cache-new /tmp/.buildx-cache-old || true
           du -ks /tmp/.buildx-cache-* || true
 
       - name: Generate container image metadata
@@ -125,66 +124,38 @@ jobs:
           context: ${{matrix.image}}
           platforms: ${{env.TARGET_PLATFORMS}}
           tags: ${{steps.meta.outputs.tags}}
-          cache-from: |
-            type=local,src=/tmp/.buildx-cache-arm64-old
-            type=local,src=/tmp/.buildx-cache-amd64-old
+          cache-from: type=local,src=/tmp/.buildx-cache-old
+          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
           push: true
-
-      - name: Cache build ${{matrix.image}} (amd64)
-        if: contains(env.TARGET_PLATFORMS, 'linux/amd64')
-        uses: docker/build-push-action@v6
-        with:
-          context: ${{matrix.image}}
-          platforms: linux/amd64
-          cache-from: type=local,src=/tmp/.buildx-cache-amd64-old
-          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-amd64-new
-          push: false
-          load: true
-
-      - name: Cache build ${{matrix.image}} (arm64)
-        if: contains(env.TARGET_PLATFORMS, 'linux/arm64')
-        uses: docker/build-push-action@v6
-        with:
-          context: ${{matrix.image}}
-          platforms: linux/arm64
-          cache-from: type=local,src=/tmp/.buildx-cache-arm64-old
-          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-arm64-new
-          push: false
-          load: true
 
       - name: Remove old cache directories
         run: |
-          rm -rf /tmp/.buildx-cache-arm64-old || true
-          rm -rf /tmp/.buildx-cache-amd64-old || true
+          rm -rf /tmp/.buildx-cache-old || true
 
       - name: Dump cache directory sizes
         if: ${{ (matrix.image == 'secrets-manager') || (matrix.image == 'session-manager') || (matrix.image == 'training-portal') || (matrix.image == 'tunnel-manager') || (matrix.image == 'lookup-service') }}
         run: |
           du -ks /tmp/.buildx-cache-* || true
 
-      - name: Save Docker cache (amd64)
+      - name: Save Docker cache
         if: ${{ (matrix.image == 'secrets-manager') || (matrix.image == 'session-manager') || (matrix.image == 'training-portal') || (matrix.image == 'tunnel-manager') || (matrix.image == 'lookup-service') }}
         uses: actions/cache/save@v4
         with:
-          path: /tmp/.buildx-cache-amd64-new
-          key: ${{runner.os}}-buildx-cache-amd64-${{matrix.image}}-${{github.sha}}
-
-      - name: Save Docker cache (arm64)
-        if: ${{ (matrix.image == 'secrets-manager') || (matrix.image == 'session-manager') || (matrix.image == 'training-portal') || (matrix.image == 'tunnel-manager') || (matrix.image == 'lookup-service') }}
-        uses: actions/cache/save@v4
-        with:
-          path: /tmp/.buildx-cache-arm64-new
-          key: ${{runner.os}}-buildx-cache-arm64-${{matrix.image}}-${{github.sha}}
+          path: /tmp/.buildx-cache-new
+          key: ${{runner.os}}-buildx-cache-${{matrix.image}}-${{github.sha}}
 
   publish-workshop-base-image:
     name: Publish (base-environment)
     runs-on: ubuntu-latest
 
     steps:
-      - name: Delete unnecesary tools
-        run: |
-          cd /opt
-          find . -maxdepth 1 -mindepth 1 '!' -path ./containerd '!' -path ./actionarchivecache '!' -path ./runner '!' -path ./runner-cache -exec rm -rf '{}' ';'
+      - name: Free Disk Space
+        uses: endersonmenezes/free-disk-space@v2
+        with:
+          remove_android: true
+          remove_dotnet: true
+          remove_haskell: true
+          remove_tool_cache: true
 
       - name: Check out the repository
         uses: actions/checkout@v4
@@ -298,6 +269,14 @@ jobs:
           - image: conda-environment
 
     steps:
+      - name: Free Disk Space
+        uses: endersonmenezes/free-disk-space@v2
+        with:
+          remove_android: true
+          remove_dotnet: true
+          remove_haskell: true
+          remove_tool_cache: true
+
       - name: Check out the repository
         uses: actions/checkout@v4
 
@@ -336,28 +315,18 @@ jobs:
         run: |
           docker images
 
-      - name: Restore Docker cache (amd64)
+      - name: Restore Docker cache
         if: ${{ (matrix.image == 'conda-environment') }}
         uses: actions/cache/restore@v4
         with:
           path: /tmp/.buildx-cache-amd64-new
-          key: ${{runner.os}}-buildx-cache-amd64-${{matrix.image}}-${{github.sha}}
+          key: ${{runner.os}}-buildx-cache-${{matrix.image}}-${{github.sha}}
           restore-keys: |
-            ${{runner.os}}-buildx-cache-amd64-${{matrix.image}}-
-
-      - name: Restore Docker cache (arm64)
-        if: ${{ (matrix.image == 'conda-environment') }}
-        uses: actions/cache/restore@v4
-        with:
-          path: /tmp/.buildx-cache-arm64-new
-          key: ${{runner.os}}-buildx-cache-arm64-${{matrix.image}}-${{github.sha}}
-          restore-keys: |
-            ${{runner.os}}-buildx-cache-arm64-${{matrix.image}}-
+            ${{runner.os}}-buildx-cache-${{matrix.image}}-
 
       - name: Rename cache directories
         run: |
-          test -d /tmp/.buildx-cache-amd64-new && mv /tmp/.buildx-cache-amd64-new /tmp/.buildx-cache-amd64-old || true
-          test -d /tmp/.buildx-cache-arm64-new && mv /tmp/.buildx-cache-arm64-new /tmp/.buildx-cache-arm64-old || true
+          test -d /tmp/.buildx-cache-new && mv /tmp/.buildx-cache-new /tmp/.buildx-cache-old || true
           du -ks /tmp/.buildx-cache-* || true
 
       - name: Generate container image metadata
@@ -390,67 +359,25 @@ jobs:
             IMAGE_REPOSITORY=ghcr.io/${{env.REPOSITORY_OWNER}}
             BASE_IMAGE_NAME=educates-base-environment
             PACKAGE_VERSION=${{env.REPOSITORY_SHA_TAG}}
-          cache-from: |
-            type=local,src=/tmp/.buildx-cache-arm64-old
-            type=local,src=/tmp/.buildx-cache-amd64-old
+          cache-from: type=local,src=/tmp/.buildx-cache-old
+          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
           push: true
 
-      - name: Cache build ${{matrix.image}} (amd64)
-        if: contains(env.TARGET_PLATFORMS, 'linux/amd64')
-        uses: docker/build-push-action@v6
-        with:
-          context: workshop-images/${{matrix.image}}
-          platforms: linux/amd64
-          build-args: |
-            IMAGE_REPOSITORY=ghcr.io/${{env.REPOSITORY_OWNER}}
-            BASE_IMAGE_NAME=educates-base-environment
-            PACKAGE_VERSION=${{env.REPOSITORY_SHA_TAG}}
-          cache-from: type=local,src=/tmp/.buildx-cache-amd64-old
-          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-amd64-new
-          push: false
-          load: true
-
-      - name: Remove old cache directories amd64
+      - name: Remove old cache directories
         run: |
-          rm -rf /tmp/.buildx-cache-amd64-old || true
-
-      - name: Cache build ${{matrix.image}} (arm64)
-        if: contains(env.TARGET_PLATFORMS, 'linux/arm64')
-        uses: docker/build-push-action@v6
-        with:
-          context: workshop-images/${{matrix.image}}
-          platforms: linux/arm64
-          build-args: |
-            IMAGE_REPOSITORY=ghcr.io/${{env.REPOSITORY_OWNER}}
-            BASE_IMAGE_NAME=educates-base-environment
-            PACKAGE_VERSION=${{env.REPOSITORY_SHA_TAG}}
-          cache-from: type=local,src=/tmp/.buildx-cache-arm64-old
-          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-arm64-new
-          push: false
-          load: true
-
-      - name: Remove old cache directories arm64
-        run: |
-          rm -rf /tmp/.buildx-cache-arm64-old || true
+          rm -rf /tmp/.buildx-cache-old || true
 
       - name: Dump cache directory sizes
-        if: ${{ (matrix.image == 'conda-environment') }}
+        # if: ${{ (matrix.image == 'conda-environment') }}
         run: |
           du -ks /tmp/.buildx-cache-* || true
 
-      - name: Save Docker cache (amd64)
-        if: ${{ (matrix.image == 'conda-environment') }}
+      - name: Save Docker cache
+        # if: ${{ (matrix.image == 'conda-environment') }}
         uses: actions/cache/save@v4
         with:
-          path: /tmp/.buildx-cache-amd64-new
-          key: ${{runner.os}}-buildx-cache-amd64-${{matrix.image}}-${{github.sha}}
-
-      - name: Save Docker cache (arm64)
-        if: ${{ (matrix.image == 'conda-environment') }}
-        uses: actions/cache/save@v4
-        with:
-          path: /tmp/.buildx-cache-arm64-new
-          key: ${{runner.os}}-buildx-cache-arm64-${{matrix.image}}-${{github.sha}}
+          path: /tmp/.buildx-cache-new
+          key: ${{runner.os}}-buildx-cache-${{matrix.image}}-${{github.sha}}
 
   publish-carvel-bundles:
     name: Bundle
